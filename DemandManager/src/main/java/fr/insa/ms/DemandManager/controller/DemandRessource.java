@@ -9,7 +9,6 @@ import fr.insa.ms.DemandManager.DemandRepository;
 import fr.insa.ms.DemandManager.model.Demand;
 
 @RestController
-@RequestMapping("/demand")
 public class DemandRessource {
 	
 	@Value("${spring.datasource.url}")
@@ -32,76 +31,6 @@ public class DemandRessource {
 	
 	@Value("${spring.jpa.hibernate.naming.physical-strategy}")
 	private String physicalStrategy;
-	
-	public String getUrl() {
-		return url;
-	}
-
-
-	public void setUrl(String url) {
-		this.url = url;
-	}
-
-
-	public String getUsername() {
-		return username;
-	}
-
-
-	public void setUsername(String username) {
-		this.username = username;
-	}
-
-
-	public String getPassword() {
-		return password;
-	}
-
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-
-	public String getDdlAuto() {
-		return ddlAuto;
-	}
-
-
-	public void setDdlAuto(String ddlAuto) {
-		this.ddlAuto = ddlAuto;
-	}
-
-
-	public String getShowSql() {
-		return showSql;
-	}
-
-
-	public void setShowSql(String showSql) {
-		this.showSql = showSql;
-	}
-
-
-	public String getDialect() {
-		return dialect;
-	}
-
-
-	public void setDialect(String dialect) {
-		this.dialect = dialect;
-	}
-
-
-	public String getPhysicalStrategy() {
-		return physicalStrategy;
-	}
-
-
-	public void setPhysicalStrategy(String physicalStrategy) {
-		this.physicalStrategy = physicalStrategy;
-	}
-
 
 	private final DemandRepository repo;
 	
@@ -131,6 +60,32 @@ public class DemandRessource {
 	@DeleteMapping("/{id}")
 	public void deleteDemand(@PathVariable int id) {
 		repo.deleteById(id);
+	}
+	
+	@GetMapping("/{id}")
+	public Demand getDemand(@PathVariable int id) {
+		return repo.findById(id).orElse(null);
+	}
+	
+	@PutMapping("/accept/{id}")
+	public Demand acceptDemand(@PathVariable int id) {
+		Demand demand = this.getDemand(id);
+		demand.setStatut("En cours");
+		return repo.save(demand);
+	}
+	
+	@PutMapping("/abandonner/{id}")
+	public Demand abandonnerDemand(@PathVariable int id) {
+		Demand demand = this.getDemand(id);
+		demand.setStatut("Abandonnée");
+		return repo.save(demand);
+	}
+	
+	@PutMapping("/realiser/{id}")
+	public Demand realiserDemand(@PathVariable int id) {
+		Demand demand = this.getDemand(id);
+		demand.setStatut("Réalisée");
+		return repo.save(demand);
 	}
 	
 	

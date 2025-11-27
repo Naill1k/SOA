@@ -14,7 +14,6 @@ import fr.insa.ms.StudentManager.EtudiantRepository;
 import fr.insa.ms.StudentManager.model.Etudiant;
 
 @RestController
-@RequestMapping("/students")
 public class StudentRessource {
 	
 	@Value("${spring.datasource.url}")
@@ -148,63 +147,4 @@ public class StudentRessource {
         return repo.findById(id).orElse(null);
     }
     
-    
-    //Config Serveur
-    @GetMapping("/url")
-    public String getUrl() {
-		return url;
-	}
-
-	public void setUrl(String url) {
-		this.url = url;
-	}
-
-	public String getUsername() {
-		return username;
-	}
-
-	public void setUsername(String username) {
-		this.username = username;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public String getDdlAuto() {
-		return ddlAuto;
-	}
-
-	public void setDdlAuto(String ddlAuto) {
-		this.ddlAuto = ddlAuto;
-	}
-
-	public String getShowSql() {
-		return showSql;
-	}
-
-	public void setShowSql(String showSql) {
-		this.showSql = showSql;
-	}
-
-	public String getDialect() {
-		return dialect;
-	}
-
-	public void setDialect(String dialect) {
-		this.dialect = dialect;
-	}
-
-	public String getPhysicalStrategy() {
-		return physicalStrategy;
-	}
-
-	public void setPhysicalStrategy(String physicalStrategy) {
-		this.physicalStrategy = physicalStrategy;
-	}
-	
 }

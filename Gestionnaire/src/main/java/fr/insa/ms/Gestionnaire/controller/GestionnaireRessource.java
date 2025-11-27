@@ -14,8 +14,8 @@ import org.springframework.web.client.RestTemplate;
 
 import fr.insa.ms.Gestionnaire.model.*;
 
+
 @RestController
-@RequestMapping("/gestionnaire")
 public class GestionnaireRessource {
 	
 	@Autowired
@@ -26,16 +26,38 @@ public class GestionnaireRessource {
 		return 42; 
 	}
 	
+	@PostMapping("/addAvis")
+	public Avis addAvis(@RequestBody Avis avis) {
+		restTemplate.put("http://DemandManager/realiser/"+avis.getIdDemande(), null);
+		return restTemplate.postForObject("http://AvisManager/add", avis, Avis.class);
+	}
+	
+	@PostMapping("/addStudent/{password}")
+	public Etudiant addStudent(@RequestBody Etudiant student, @PathVariable String password) {
+		return restTemplate.postForObject("http://StudentManager/add/"+password, student, Etudiant.class);
+	}
+	
 	@GetMapping("/getStudents")
 	public List<Etudiant> getStudents() {
-		List<Etudiant> students = restTemplate.exchange("http://StudentManager/students/all", HttpMethod.GET, null, new ParameterizedTypeReference<List<Etudiant>>() {}).getBody();
+		List<Etudiant> students = restTemplate.exchange("http://StudentManager/all", HttpMethod.GET, null, new ParameterizedTypeReference<List<Etudiant>>() {}).getBody();
 		return students;
+	}
+	
+	@PutMapping("/acceptDemand/{id}")
+	public void acceptDemand(@PathVariable int id) {
+		restTemplate.put("http://DemandManager/accept/"+id, null);
+	}
+	
+	@PutMapping("/abandonnerDemand/{id}")
+	public void abandonnerDemand(@PathVariable int id) {
+		restTemplate.put("http://DemandManager/abandonner/"+id, null);
 	}
 	
 	@PostMapping("/addDemand")
 	public List<Etudiant> addDemand(@RequestBody Demand newDemand){
-		Demand demand = restTemplate.postForObject("http://DemandManager/demand/add", newDemand, Demand.class);
-		Etudiant demandeur = restTemplate.getForObject("http://StudentManager/students/"+demand.getEtudiant(), Etudiant.class);
+		newDemand.setStatut("En attente");
+		Demand demand = restTemplate.postForObject("http://DemandManager/add", newDemand, Demand.class);
+		Etudiant demandeur = restTemplate.getForObject("http://StudentManager/"+demand.getEtudiant(), Etudiant.class);
 		String contenu = demand.getTitre().toLowerCase() + ". " + demand.getDescription().toLowerCase();
 		
 		List<Etudiant> students = this.getStudents();
