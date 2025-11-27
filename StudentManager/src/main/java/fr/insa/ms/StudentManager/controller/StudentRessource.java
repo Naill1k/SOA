@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,8 +16,30 @@ import fr.insa.ms.StudentManager.model.Etudiant;
 @RestController
 @RequestMapping("/students")
 public class StudentRessource {
+	
+	@Value("${spring.datasource.url}")
+	private String url;
+	
+	@Value("${spring.datasource.username}")
+	private String username;
+	
+	@Value("${spring.datasource.password}")
+	private String password;
+	
+	@Value("${spring.jpa.hibernate.ddl-auto}")
+	private String ddlAuto;
+	
+	@Value("${spring.jpa.show-sql}")
+	private String showSql;
+	
+	@Value("${spring.jpa.properties.hibernate.dialect}")
+	private String dialect;
+	
+	@Value("${spring.jpa.hibernate.naming.physical-strategy}")
+	private String physicalStrategy;
+	
 
-    private static final String PASSWORD_FILE = "passwords.txt";
+	private static final String PASSWORD_FILE = "passwords.txt";
     private static final HashMap<Integer, String> passwordDatabase = new HashMap<>();
 
     private final EtudiantRepository repo;
@@ -124,4 +147,64 @@ public class StudentRessource {
     public Etudiant getStudent(@PathVariable int id) {
         return repo.findById(id).orElse(null);
     }
+    
+    
+    //Config Serveur
+    @GetMapping("/url")
+    public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getDdlAuto() {
+		return ddlAuto;
+	}
+
+	public void setDdlAuto(String ddlAuto) {
+		this.ddlAuto = ddlAuto;
+	}
+
+	public String getShowSql() {
+		return showSql;
+	}
+
+	public void setShowSql(String showSql) {
+		this.showSql = showSql;
+	}
+
+	public String getDialect() {
+		return dialect;
+	}
+
+	public void setDialect(String dialect) {
+		this.dialect = dialect;
+	}
+
+	public String getPhysicalStrategy() {
+		return physicalStrategy;
+	}
+
+	public void setPhysicalStrategy(String physicalStrategy) {
+		this.physicalStrategy = physicalStrategy;
+	}
+	
 }
