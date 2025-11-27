@@ -1,0 +1,127 @@
+package fr.insa.ms.StudentManager.controller;
+
+import java.io.*;
+import java.nio.file.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.web.bind.annotation.*;
+
+import fr.insa.ms.StudentManager.EtudiantRepository;
+import fr.insa.ms.StudentManager.model.Etudiant;
+
+@RestController
+@RequestMapping("/students")
+public class StudentRessource {
+
+    private static final String PASSWORD_FILE = "passwords.txt";
+    private static final HashMap<Integer, String> passwordDatabase = new HashMap<>();
+
+    private final EtudiantRepository repo;
+
+    public StudentRessource(EtudiantRepository repo) {
+        this.repo = repo;
+        loadPasswords();
+    }
+
+
+    private void loadPasswords() {
+        try {
+            File file = new File(PASSWORD_FILE);
+            if (!file.exists()) {
+                file.createNewFile();
+                return;
+            }
+
+            List<String> lines = Files.readAllLines(file.toPath());
+            for (String l : lines) {
+                if (l.contains(":")) {
+                    String[] parts = l.split(":");
+                    int id = Integer.parseInt(parts[0]);
+                    String hash = parts[1];
+                    passwordDatabase.put(id, hash);
+                    System.out.println(id + ": " + hash);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void rewritePasswordFile() {
+        try (FileWriter writer = new FileWriter(PASSWORD_FILE, false)) {
+            for (Map.Entry<Integer, String> entry : passwordDatabase.entrySet()) {
+                writer.write(entry.getKey() + ":" + entry.getValue() + "\n");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void savePassword(int id, String hashed) {
+        passwordDatabase.put(id, hashed);
+        rewritePasswordFile();
+    }
+    
+    public boolean checkPasssword(int id, String password ) {
+    	return ((passwordDatabase.containsKey(id)) && (BCrypt.checkpw(password, passwordDatabase.get(id))));
+    }
+
+
+    @PostMapping("/add/{password}")
+    public Etudiant addStudent(@RequestBody Etudiant student, @PathVariable String password) {
+        Etudiant newStudent = repo.save(student);
+
+        String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
+        savePassword(newStudent.getId(), hashed);
+
+        return newStudent;
+    }
+
+
+    @PutMapping("/{id}/{password}")
+    public Etudiant updateStudent(@PathVariable int id, @RequestBody Etudiant newData, @PathVariable String password) {
+
+        if (!checkPasssword(id, password))
+            return null;
+
+        Etudiant existing = repo.findById(id).orElse(null);
+        if (existing == null) return null;
+
+        if (newData.getFirstName() != null) existing.setFirstName(newData.getFirstName());
+        if (newData.getLastName() != null) existing.setLastName(newData.getLastName());
+        if (newData.getEmail() != null) existing.setEmail(newData.getEmail());
+        if (newData.getFiliere() != null) existing.setFiliere(newData.getFiliere());
+        if (newData.getEtablissement() != null) existing.setEtablissement(newData.getEtablissement());
+        if (newData.getDispo() != null) existing.setDispo(newData.getDispo());
+        if (newData.getCompetences() != null) existing.setCompetences(newData.getCompetences());
+
+        return repo.save(existing);
+    }
+
+
+    @DeleteMapping("/{id}/{password}")
+    public void deleteStudent(@PathVariable int id, @PathVariable String password) {
+    	if (checkPasssword(id, password)) {
+	        repo.deleteById(id);
+	        
+	        passwordDatabase.remove(id);
+	        rewritePasswordFile();
+    	}
+    }
+
+
+    @GetMapping("/all")
+    public List<Etudiant> getStudents() {
+        return repo.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Etudiant getStudent(@PathVariable int id) {
+        return repo.findById(id).orElse(null);
+    }
+}

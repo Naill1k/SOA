@@ -1,0 +1,84 @@
+package fr.insa.ms.Gestionnaire.controller;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.HashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+
+import fr.insa.ms.Gestionnaire.model.*;
+
+@RestController
+@RequestMapping("/gestionnaire")
+public class GestionnaireRessource {
+	
+	@Autowired
+	private RestTemplate restTemplate;
+
+	@GetMapping("/")
+	public int getTest() {
+		return 42; 
+	}
+	
+	@GetMapping("/getStudents")
+	public List<Etudiant> getStudents() {
+		List<Etudiant> students = restTemplate.exchange("http://StudentManager/students/all", HttpMethod.GET, null, new ParameterizedTypeReference<List<Etudiant>>() {}).getBody();
+		return students;
+	}
+	
+	@PostMapping("/addDemand")
+	public List<Etudiant> addDemand(@RequestBody Demand newDemand){
+		Demand demand = restTemplate.postForObject("http://DemandManager/demand/add", newDemand, Demand.class);
+		Etudiant demandeur = restTemplate.getForObject("http://StudentManager/students/"+demand.getEtudiant(), Etudiant.class);
+		String contenu = demand.getTitre().toLowerCase() + ". " + demand.getDescription().toLowerCase();
+		
+		List<Etudiant> students = this.getStudents();
+		HashMap<Integer, List<Etudiant>> map = new HashMap<>();
+		
+		for (Etudiant student : students) {
+			// Filtre année (on suppose que filière est au format INSA : 5IR, 3MIC, ...)	
+			if (demandeur.getFiliere().charAt(0) >= student.getFiliere().charAt(0)) {
+				continue;
+			}
+			
+			// Filtre dispos
+			if (! student.getDispo().contains(demand.getDate())) {
+				continue;
+			}
+			
+			// Filtre compétences
+			List<String> competencesList = Arrays.asList(student.getCompetences().split(";"));
+			int scoreStudent = 0;
+			
+			for (String competence : competencesList) {
+				if (contenu.contains(competence.toLowerCase())) {
+					scoreStudent++;
+				}
+			}
+			
+			if (! map.containsKey(scoreStudent)) {
+				map.put(scoreStudent, new ArrayList<Etudiant>());
+			} 
+			map.get(scoreStudent).add(student);
+			
+		}
+		
+		List<Etudiant> potentialTutors = new ArrayList<Etudiant>();
+		
+		// Ajoute au minimum 5 étudiants par ordre de compétence
+		while((potentialTutors.size() < 5) && (! map.isEmpty())) {
+			int maxScore = Collections.max(map.keySet());
+			potentialTutors.addAll(map.get(maxScore));
+			map.remove(maxScore);
+		}
+		
+		return potentialTutors;
+	}
+	
+}
