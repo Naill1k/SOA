@@ -21,31 +21,67 @@ public class GestionnaireRessource {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	@GetMapping("/")
-	public int getTest() {
-		return 42; 
-	}
 	
 	@PostMapping("/addAvis")
 	public Avis addAvis(@RequestBody Avis avis) {
 		restTemplate.put("http://DemandManager/realiser/"+avis.getIdDemande(), null);
 		return restTemplate.postForObject("http://AvisManager/add", avis, Avis.class);
 	}
+
+	@GetMapping("/getAvis")
+	public List<Avis> getAvis() {
+		List<Avis> avis = restTemplate.exchange("http://AvisManager/all", HttpMethod.GET, null, new ParameterizedTypeReference<List<Avis>>() {}).getBody();
+		return avis;
+	}
+	
+	@DeleteMapping("/deleteAvis/{id}")
+	public void deleteAvis(@PathVariable int id) {
+		restTemplate.delete("http://AvisManager/" + id);
+	}
+	
 	
 	@PostMapping("/addStudent/{password}")
 	public Etudiant addStudent(@RequestBody Etudiant student, @PathVariable String password) {
 		return restTemplate.postForObject("http://StudentManager/add/"+password, student, Etudiant.class);
 	}
-	
+
+	@GetMapping("/getStudent/{id}")
+    public Etudiant getStudent(@PathVariable int id) {
+		return restTemplate.getForObject("http://StudentManager/"+id, Etudiant.class);
+	}
+
 	@GetMapping("/getStudents")
 	public List<Etudiant> getStudents() {
 		List<Etudiant> students = restTemplate.exchange("http://StudentManager/all", HttpMethod.GET, null, new ParameterizedTypeReference<List<Etudiant>>() {}).getBody();
 		return students;
 	}
+
+	@PutMapping("/updateStudent/{id}/{password}")
+    public Etudiant updateStudent(@PathVariable int id, @RequestBody Etudiant newData, @PathVariable String password) {
+		restTemplate.put("http://StudentManager/" + id + "/" + password, null);
+		return this.getStudent(id);
+	}
+
+	 @DeleteMapping("/deleteStudent/{id}/{password}")
+    public void deleteStudent(@PathVariable int id, @PathVariable String password) {
+		restTemplate.delete("http://StudentManager/" + id + "/" + password);
+	}
+
+	
+	@GetMapping("/getDemands")
+	public List<Demand> getDemands() {
+		List<Demand> demands = restTemplate.exchange("http://DemandManager/all", HttpMethod.GET, null, new ParameterizedTypeReference<List<Demand>>() {}).getBody();
+		return demands;
+	}
 	
 	@PutMapping("/acceptDemand/{id}")
 	public void acceptDemand(@PathVariable int id) {
 		restTemplate.put("http://DemandManager/accept/"+id, null);
+	}
+
+	@PutMapping("/realiserDemand/{id}")
+	public void realiserDemand(@PathVariable int id) {
+		restTemplate.put("http://DemandManager/realiser/"+id, null);
 	}
 	
 	@PutMapping("/abandonnerDemand/{id}")
